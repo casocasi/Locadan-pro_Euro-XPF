@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LocaDan Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{ --accent:#1e40af; --muted:#f3f4f6; --card:#ffffff; --danger:#dc2626; }
+    body{ margin:0; font-family:Inter,Arial,sans-serif; background:#f3f4f6; color:#111827; }
+    .app{ display:flex; min-height:100vh; }
+    aside{ width:260px; background:var(--accent); color:#fff; padding:20px; box-sizing:border-box; }
+    aside h1{ margin:0 0 12px 0; font-size:20px; }
+    aside button{ display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:10px 12px; margin-bottom:8px; background:rgba(255,255,255,0.06); border:0; color:#fff; border-radius:8px; cursor:pointer; font-size:15px; position:relative; }
+    aside button:hover{ background:rgba(255,255,255,0.12); }
+    aside button.active{ background:rgba(255,255,255,0.18); box-shadow:inset 0 0 0 2px rgba(255,255,255,0.03); }
+    aside button .badge{ position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.25); color:#fff; font-size:11px; padding:2px 6px; border-radius:10px; min-width:18px; text-align:center; }
+    aside button.active::before{ content:""; width:8px; height:8px; background:#10b981; border-radius:50%; margin-right:8px; }
+    main{ flex:1; padding:26px; box-sizing:border-box; overflow:auto; position:relative; }
+    section{ display:none; }
+    section.active{ display:block; animation:fadeIn .18s ease both; }
+    @keyframes fadeIn{ from{ opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:18px; }
+    .card{ border-radius:12px; padding:18px; color:white; font-weight:700; transition:transform .25s ease, box-shadow .25s ease; box-shadow:0 6px 18px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04); position:relative; overflow:hidden; }
+    .card h3{ margin:0; font-size:14px; opacity:0.95 }
+    .card .num{ font-size:3rem; font-weight:800; margin-top:8px; }
+    .card .meta{ font-size:12px; opacity:0.9; margin-top:6px; }
+    .card.card-1{ background:linear-gradient(135deg,#2563eb,#60a5fa); }
+    .card.card-2{ background:linear-gradient(135deg,#059669,#34d399); }
+    .card.card-3{ background:linear-gradient(135deg,#d97706,#f59e0b); }
+    .card.card-4{ background:linear-gradient(135deg,#6366f1,#818cf8); }
+    .card:hover{ transform:translateY(-8px) scale(1.03); box-shadow:0 14px 40px rgba(0,0,0,0.15); }
+    .progress-circle{ width:64px; height:64px; border-radius:50%; background:conic-gradient(#10b981 0%, #e5e7eb 0%); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; box-shadow:0 6px 16px rgba(0,0,0,0.08); }
+    table{ width:100%; border-collapse:collapse; margin-top:12px; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 3px 10px rgba(2,6,23,0.03); }
+    thead th{ padding:10px 12px; text-align:left; font-weight:700; border-bottom:1px solid #e6e7eb; }
+
+    /* COULEURS DÉCALÉES PAR SECTION */
+    #section-proprietaires thead th { background:#007FFF; color:#0f172a; }
+    #section-biens thead th { background:#149414; color:#FFFFFF; }
+    #section-locataires thead th { background:#85C17E; color:#0000FF; }
+    #section-loyers thead th { background:#fee2e2; color:#7f1d1d; }
+    #section-encaissements thead th { background:#3A9D23; color:#FFFFFF; }
+    #section-depenses thead th { background:#FF0000; color:#FFFFFF; }
+    #section-quittances thead th { background:#f5d0fe; color:#6b21a8; }
+    #section-revisions thead th { background:#677179; color:#FFFF00; }
+    #section-documents thead th { background:#F88E55; color:#000000; }
+
+    tbody td{ padding:10px 12px; border-bottom:1px solid #f0f0f0; }
+    tbody tr:hover{ background:#fafafa; }
+    .btn{ padding:8px 12px; border-radius:8px; border:0; cursor:pointer; transition:all .18s ease; }
+    .btn.primary {
+      background:#0ea5e9;
+      color:#fff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
+    }
+    .btn.ghost{ background:transparent; border:1px solid #e6e7eb; }
+    .btn.danger{ background:var(--danger); color:#fff; }
+    .btn.print{ background:#10b981; color:#fff; }
+    #modal-container{ position:fixed; inset:0; display:none; align-items:flex-start; justify-content:center; background:rgba(0,0,0,0.3); z-index:60; padding-top:50px; }
+    .modal-window{ width:420px; background:#fff; border-radius:12px; box-shadow:0 18px 50px rgba(2,6,23,0.2); overflow:hidden; position:relative; }
+    .modal-head{ padding:10px 12px; background:#f8fafc; cursor:move; user-select:none; font-weight:700; color:#0f172a; display:flex; justify-content:space-between; align-items:center; }
+    .modal-body{ padding:14px; }
+    .modal-body label{ display:block; font-size:13px; margin-top:8px; color:#374151; }
+    .modal-body input, .modal-body select, .modal-body textarea{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid #e6e7eb; margin-top:6px; box-sizing:border-box; }
+    .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+    .muted{ color:#6b7280; font-size:13px; }
+    .summary{ background:#fff; padding:12px; border-radius:8px; display:flex; gap:20px; align-items:center; box-shadow:0 4px 12px rgba(2,6,23,0.04); }
+    .summary .title{ font-weight:700; color:#0f172a; }
+    .enc-date{ color:#fff; background:#2563eb; padding:6px 10px; border-radius:8px; font-weight:600; }
+    #taux-remplissage{ font-size:2rem; font-weight:800; color:var(--accent); }
+    .devise-switch{ position:absolute; top:1.5rem; right:1.5rem; z-index:10; }
+    @media(max-width:900px){ aside{ display:none; } }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <aside>
+    <h1>🏠 LocaDan Pro</h1>
+    <button id="btn-dashboard" class="active">📊 Tableau de bord</button>
+    <button id="btn-proprietaires">👤 Propriétaires</button>
+    <button id="btn-biens">🏢 Biens</button>
+    <button id="btn-locataires">🧍 Locataires</button>
+    <button id="btn-loyers">📅 Appel des loyers</button>
+    <button id="btn-encaissements">💰 Encaissements</button>
+    <button id="btn-depenses">💸 Dépenses</button>
+    <button id="btn-quittances">🧾 Quittances</button>
+    <button id="btn-revisions">📈 Révisions des loyers</button>
+    <button id="btn-documents">📁 Documents</button>
+    <hr style="margin:12px 0;border-color:rgba(255,255,255,0.2)">
+    <button onclick="backupData()">💾 Sauvegarder</button>
+    <button onclick="restoreData()">🔁 Restaurer</button>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="section-dashboard" class="active relative">
+      <h2 class="text-3xl font-bold mb-6">Tableau de bord LocaDan Pro 📊</h2>
+      <div class="devise-switch">
+        <button id="btn-devise" class="btn primary shadow text-sm">
+          💱 <span id="devise-label">€</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card card-1 p-6"><h3 class="text-xl font-semibold">Propriétaires</h3><div class="num text-5xl mt-4" id="dash-proprietaires-count">0</div><div class="meta text-base mt-2 opacity-90">Total enregistrés</div></div>
+        <div class="card card-2 p-6"><h3 class="text-xl font-semibold">Biens</h3><div class="num text-5xl mt-4" id="dash-biens-count">0</div><div class="meta text-base mt-2 opacity-90">Biens gérés</div></div>
+        <div class="card card-3 p-6"><h3 class="text-xl font-semibold">Locataires</h3><div class="num text-5xl mt-4" id="dash-locataires-count">0</div><div class="meta text-base mt-2 opacity-90">Actifs actuellement</div></div>
+        <div class="card card-4 p-6"><h3 class="text-xl font-semibold">Encaissements</h3><div class="num text-4xl mt-4" id="dash-encaissements-count">0</div><div class="meta text-base mt-2">Montant total : <span id="dash-encaissements-total">€0.00</span></div><div class="mt-4 flex items-center justify-between"><div class="text-sm opacity-90">Pourcentage encaissé</div><div id="progress-circle" class="progress-circle text-sm w-16 h-16">0%</div></div></div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-md flex items-center justify-between"><div><h3 class="text-lg font-bold text-gray-700">Taux de remplissage global</h3><p class="text-gray-500 text-sm mt-1">Ratio entre locataires et biens disponibles</p></div><div class="flex items-center gap-4"><div id="taux-remplissage" class="text-3xl font-extrabold text-blue-600">0%</div></div></div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-md mt-4 flex items-center justify-between"><div><h3 class="text-lg font-bold text-gray-700">Total des dépenses</h3></div><div class="text-3xl font-extrabold text-red-600" id="dash-depenses-total">€0.00</div></div>
+    </section>
+
+    <!-- PROPRIETAIRES -->
+    <section id="section-proprietaires"><div class="flex justify-between items-center"><h2 class="text-xl font-bold">Propriétaires</h2><button id="btn-add-proprietaire" class="btn primary">➕ Ajouter</button></div>
+      <table><thead><tr><th>Nom</th><th>Prénom</th><th>Téléphone</th><th>Email</th><th style="text-align:center">Actions</th></tr></thead><tbody id="proprietaires-table-body"></tbody></table>
+    </section>
+
+    <!-- BIENS -->
+    <section id="section-biens"><div class="flex justify-between items-center"><h2 class="text-xl font-bold">Biens</h2><button id="btn-add-bien" class="btn primary">➕ Ajouter</button></div>
+      <table><thead><tr><th>Bien</th><th>Adresse</th><th>Type</th><th>Surface (m²)</th><th>Chambres</th><th>Infos</th><th>Loyer</th><th style="text-align:center">Actions</th></tr></thead><tbody id="biens-table-body"></tbody></table>
+    </section>
+
+    <!-- LOCATAIRES -->
+    <section id="section-locataires"><div class="flex justify-between items-center"><h2 class="text-xl font-bold">Locataires</h2><button id="btn-add-locataire" class="btn primary">➕ Ajouter</button></div>
+      <table><thead><tr><th>Nom</th><th>Prénom</th><th>Téléphone</th><th>Notes</th><th style="text-align:center">Actions</th></tr></thead><tbody id="locataires-table-body"></tbody></table>
+    </section>
+
+    <!-- LOYERS -->
+    <section id="section-loyers"><div class="flex justify-between items-center"><h2 class="text-xl font-bold">Appel des loyers</h2><button id="btn-add-loyer" class="btn primary">➕ Ajouter</button></div>
+      <table><thead><tr><th>Locataire</th><th>Bien</th><th>Montant</th><th>Date</th><th style="text-align:center">Actions</th></tr></thead><tbody id="loyers-table-body"></tbody></table>
+    </section>
+
+    <!-- ENCAISSEMENTS -->
+    <section id="section-encaissements">
+      <div class="flex justify-between items-center mb-2">
+        <div class="summary"><div><div class="title">Total des loyers encaissés</div><div id="encaissements-total" class="font-bold">€0.00</div></div><div class="ml-3"><div class="muted">Date :</div><div class="enc-date" id="encaissements-date">--/--/----</div></div></div>
+        <div class="flex gap-2"><button id="btn-add-encaissement" class="btn primary">➕ Ajouter</button><button id="btn-print-pdf" class="btn print">🖨️ Imprimer PDF</button></div>
+      </div>
+      <table><thead><tr><th>Date</th><th>Locataire</th><th>Bien</th><th>Méthode</th><th>Montant</th><th style="text-align:center">Actions</th></tr></thead><tbody id="encaissements-table-body"></tbody></table>
+    </section>
+
+    <!-- DÉPENSES -->
+    <section id="section-depenses">
+      <div class="flex justify-between items-center"><h2 class="text-xl font-bold">Dépenses</h2><div class="flex gap-2"><button id="btn-add-depense" class="btn primary">➕ Ajouter</button><button id="btn-print-depenses" class="btn print">🖨️ Imprimer PDF</button></div></div>
+      <div class="summary mt-2"><div class="font-bold">Total des dépenses : <span id="depenses-total">€0.00</span></div><div>Date : <span id="depenses-date">--/--/----</span></div></div>
+      <table><thead><tr><th>Date</th><th>Catégorie</th><th>Description</th><th>Montant</th><th style="text-align:center">Actions</th></tr></thead><tbody id="depenses-table-body"></tbody></table>
+    </section>
+
+    <!-- QUITTANCES -->
+    <section id="section-quittances"><div class="flex justify-between items-center"><h2 class="text-xl font-bold">Quittances</h2><div class="flex gap-2"><button id="btn-add-quittance" class="btn primary">➕ Ajouter</button><button id="btn-print-quittance" class="btn print">🖨️ Imprimer PDF</button></div></div>
+      <table><thead><tr><th>Locataire</th><th>Montant</th><th>Date de paiement</th><th style="text-align:center">Actions</th></tr></thead><tbody id="quittances-table-body"></tbody></table>
+    </section>
+
+    <!-- RÉVISIONS -->
+    <section id="section-revisions"><div class="flex justify-between items-center"><h2 class="text-xl font-bold">Révisions des Loyers</h2><div class="flex gap-2"><button id="btn-add-revision" class="btn primary">➕ Ajouter</button><button id="btn-print-revisions" class="btn print">🖨️ Imprimer PDF</button></div></div>
+      <table><thead><tr><th>Bien</th><th>Ancien</th><th>Nouveau</th><th>Date de révision</th><th style="text-align:center">Actions</th></tr></thead><tbody id="revisions-table-body"></tbody></table>
+    </section>
+
+    <!-- DOCUMENTS -->
+    <section id="section-documents"><h2>📁 Mes Documents</h2>
+      <div class="upload-zone"><input type="file" id="file-input" multiple /><button class="btn primary" id="btn-import-doc">Importer</button></div>
+      <table class="data-table"><thead><tr><th>Nom</th><th>Taille</th><th style="padding-left:14rem;">Actions</th></tr></thead><tbody id="documents-table-body"></tbody></table>
+	  
+	 
+    </section>
+  </main>
+</div>
+
+<!-- Modal container -->
+<div id="modal-container"><div id="modal-content"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
